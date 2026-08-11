@@ -112,4 +112,12 @@ ENV/
 
 *.model
 
-!documentation/assets/scribble_example.png
+!documentation/assets/scribble_example.png.venv/
+autoPET-3-LesionTracer/*
+
+# nnU-Net (symlinks to the data drive; machine-specific)
+nnUNet_raw/
+nnUNet_preprocessed/
+nnUNet_results/
+*.nii.gz
+._*
