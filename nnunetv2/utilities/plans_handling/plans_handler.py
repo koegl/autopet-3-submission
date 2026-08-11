@@ -123,6 +123,34 @@ class ConfigurationManager(object):
     def patch_size(self) -> List[int]:
         return self.configuration['patch_size']
 
+    def set_batch_size(self, new_batch_size: int) -> None:
+        """Needed by curriculum trainers that vary the batch size during training
+        (e.g. nnUNetTrainer_PGPSplus). Upstream nnU-Net has no setter."""
+        self.configuration['batch_size'] = int(new_batch_size)
+
+    def set_patch_size(self, new_patch_size: Union[List[int], Tuple[int, ...]]) -> None:
+        """Needed by curriculum trainers that grow the patch size during training
+        (e.g. nnUNetTrainer_PGPSplus). Upstream nnU-Net has no setter.
+
+        Safe because the network is fully convolutional and is built from
+        `architecture.arch_kwargs`, which does not depend on the patch size."""
+        self.configuration['patch_size'] = [int(i) for i in new_patch_size]
+
+    @property
+    def num_pool_per_axis(self) -> List[int]:
+        """Number of downsampling operations per axis.
+
+        nnU-Net <= 2.1 stored this explicitly. Since the architecture spec moved
+        into `architecture.arch_kwargs` it has to be derived from the strides.
+        """
+        strides = self.pool_op_kernel_sizes
+        num_pool = [0] * len(strides[0])
+        for stride in strides:
+            for axis, s in enumerate(stride):
+                if s > 1:
+                    num_pool[axis] += int(np.log2(s))
+        return num_pool
+
     @property
     def median_image_size_in_voxels(self) -> List[int]:
         return self.configuration['median_image_size_in_voxels']

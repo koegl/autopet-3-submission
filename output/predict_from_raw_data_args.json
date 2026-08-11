@@ -1,0 +1,16 @@
+{
+    "folder_with_segs_from_prev_stage": null,
+    "list_of_lists_or_source_folder": [
+        [
+            "/home/iml/fryderyk.koegl/data/PSMAReg/PSMAReg_dataset/imagesTr/PSMARegPSMA_0337_0000_01.nii.gz",
+            "/home/iml/fryderyk.koegl/data/PSMAReg/PSMAReg_dataset/imagesTr/PSMARegPSMA_0337_0001_01.nii.gz"
+        ]
+    ],
+    "num_parts": 1,
+    "num_processes_preprocessing": 1,
+    "num_processes_segmentation_export": 1,
+    "output_folder_or_list_of_truncated_output_files": "/home/iml/fryderyk.koegl/code/autopet-3-submission/output",
+    "overwrite": true,
+    "part_id": 0,
+    "save_probabilities": false
+}
