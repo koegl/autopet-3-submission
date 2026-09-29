@@ -7,7 +7,7 @@
 #SBATCH --qos=gpu_normal
 #SBATCH --mem=80G
 #SBATCH --nice=10000
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:h100:1  # needs ~26 GB; plain gpu:1 can land on 20 GB A100 MIG slices
 #SBATCH --cpus-per-task=16
 
 # Train one fold of the autoPET3-style nnU-Net on PSMAReg.
