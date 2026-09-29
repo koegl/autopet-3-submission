@@ -2,8 +2,9 @@
 #SBATCH --job-name=psmareg_nnunet
 #SBATCH --output=/home/iml/fryderyk.koegl/logs/%x_%j.out
 #SBATCH --error=/home/iml/fryderyk.koegl/logs/%x_%j.err
-#SBATCH -t 4-00:00:00
+#SBATCH -t 1-00:00:00
 #SBATCH -p gpu_p
+#SBATCH --qos=gpu_normal
 #SBATCH --mem=80G
 #SBATCH --nice=10000
 #SBATCH --gres=gpu:1
