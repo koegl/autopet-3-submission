@@ -106,3 +106,6 @@ torch = { index = "pytorch-cu124" }
 torchvision = { index = "pytorch-cu124" }
 #
 # ignore-words-list = ''
+
+[tool.setuptools.packages.find]
+include = ["nnunetv2*"]
