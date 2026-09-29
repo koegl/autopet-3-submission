@@ -1,0 +1,200 @@
+{
+    "configurations": {
+        "3d_fullres": {
+            "architecture": {
+                "_kw_requires_import": [
+                    "conv_op",
+                    "norm_op",
+                    "dropout_op",
+                    "nonlin"
+                ],
+                "arch_kwargs": {
+                    "conv_bias": true,
+                    "conv_op": "torch.nn.modules.conv.Conv3d",
+                    "dropout_op": null,
+                    "dropout_op_kwargs": null,
+                    "features_per_stage": [
+                        32,
+                        64,
+                        128,
+                        256,
+                        320,
+                        320
+                    ],
+                    "kernel_sizes": [
+                        [
+                            3,
+                            3,
+                            3
+                        ],
+                        [
+                            3,
+                            3,
+                            3
+                        ],
+                        [
+                            3,
+                            3,
+                            3
+                        ],
+                        [
+                            3,
+                            3,
+                            3
+                        ],
+                        [
+                            3,
+                            3,
+                            3
+                        ],
+                        [
+                            3,
+                            3,
+                            3
+                        ]
+                    ],
+                    "n_blocks_per_stage": [
+                        1,
+                        3,
+                        4,
+                        6,
+                        6,
+                        6
+                    ],
+                    "n_conv_per_stage_decoder": [
+                        1,
+                        1,
+                        1,
+                        1,
+                        1
+                    ],
+                    "n_stages": 6,
+                    "nonlin": "torch.nn.LeakyReLU",
+                    "nonlin_kwargs": {
+                        "inplace": true
+                    },
+                    "norm_op": "torch.nn.modules.instancenorm.InstanceNorm3d",
+                    "norm_op_kwargs": {
+                        "affine": true,
+                        "eps": 1e-05
+                    },
+                    "strides": [
+                        [
+                            1,
+                            1,
+                            1
+                        ],
+                        [
+                            2,
+                            2,
+                            2
+                        ],
+                        [
+                            2,
+                            2,
+                            2
+                        ],
+                        [
+                            2,
+                            2,
+                            2
+                        ],
+                        [
+                            2,
+                            2,
+                            2
+                        ],
+                        [
+                            2,
+                            2,
+                            2
+                        ]
+                    ]
+                },
+                "network_class_name": "dynamic_network_architectures.architectures.unet.ResidualEncoderUNet"
+            },
+            "batch_dice": true,
+            "batch_size": 24,
+            "data_identifier": "nnUNetPlans1x1x1_znorm_3d_fullres",
+            "median_image_size_in_voxels": [
+                450.0,
+                398.5,
+                400.0
+            ],
+            "normalization_schemes": [
+                "ZScoreNormalization"
+            ],
+            "patch_size": [
+                192,
+                192,
+                192
+            ],
+            "preprocessor_name": "DefaultPreprocessor",
+            "resampling_fn_data": "resample_torch_fornnunet",
+            "resampling_fn_data_kwargs": {
+                "force_separate_z": false,
+                "is_seg": false,
+                "memefficient_seg_resampling": false,
+                "num_threads": 8
+            },
+            "resampling_fn_probabilities": "resample_data_or_seg_to_shape",
+            "resampling_fn_probabilities_kwargs": {
+                "force_separate_z": null,
+                "is_seg": false,
+                "order": 1,
+                "order_z": 0
+            },
+            "resampling_fn_seg": "resample_torch_fornnunet",
+            "resampling_fn_seg_kwargs": {
+                "force_separate_z": false,
+                "is_seg": true,
+                "memefficient_seg_resampling": false,
+                "num_threads": 8
+            },
+            "spacing": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "use_mask_for_norm": [
+                false
+            ]
+        }
+    },
+    "dataset_name": "Dataset619_nativemultistem",
+    "experiment_planner_used": "nnUNetPlannerL_1x1x1",
+    "foreground_intensity_properties_per_channel": {
+        "0": {
+            "max": 6739.0,
+            "mean": 63.436882,
+            "median": 96.0,
+            "min": -1570.9453,
+            "percentile_00_5": -937.0,
+            "percentile_99_5": 275.0,
+            "std": 175.48
+        }
+    },
+    "image_reader_writer": "SimpleITKIO",
+    "label_manager": "LabelManager",
+    "original_median_shape_after_transp": [
+        103,
+        512,
+        512
+    ],
+    "original_median_spacing_after_transp": [
+        5.0,
+        0.712890625,
+        0.712890625
+    ],
+    "plans_name": "nnUNetResEncUNetL1x1x1_Plans_znorm_bs24",
+    "transpose_backward": [
+        0,
+        1,
+        2
+    ],
+    "transpose_forward": [
+        0,
+        1,
+        2
+    ]
+}
