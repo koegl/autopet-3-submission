@@ -79,6 +79,7 @@ class autoPET3_Trainer(nnUNetTrainer):
         super().__init__(plans, configuration, fold, dataset_json, unpack_dataset, device)
         self.num_epochs = 1500
         self.initial_lr = 1e-3
+        self.save_every = 10  # resumable within 24h cluster time limits
 
     @staticmethod
     def get_training_transforms(
