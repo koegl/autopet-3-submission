@@ -35,7 +35,7 @@ DEFAULT_TRAINER = "nnUNetTrainer_PGPSplus"
 # Stop after preprocessing by default: preprocessing needs no GPU and can run
 # alongside another training job, whereas training cannot. Flip this to False
 # (or pass --no-preprocess-only) once the GPU is free.
-PREPROCESS_ONLY = True
+PREPROCESS_ONLY = False
 
 
 def nnunet_env() -> dict:

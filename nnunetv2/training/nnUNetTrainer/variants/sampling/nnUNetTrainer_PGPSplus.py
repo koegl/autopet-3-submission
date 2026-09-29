@@ -14,9 +14,11 @@ Differences from upstream, all forced by the 2.5.1 API or by resource safety:
   advanced incrementally. This is the same sequence of patch sizes, but it
   survives resuming from a checkpoint -- upstream restarts the curriculum from
   the smallest patch size whenever training is resumed.
-* Dataloaders from `on_train_start`, and the previous stage's dataloader, are
-  shut down rather than leaked. Upstream leaves a set of worker processes alive
-  per stage.
+* The validation dataloader built by `on_train_start` is reused for the whole
+  run (it is already at the planned patch size), and every dataloader the
+  curriculum discards is shut down. Upstream builds a second validation loader
+  and leaks a set of worker processes per stage.
+* torch.compile is disabled; see `_do_i_compile`.
 
 Method: start at the smallest patch size the architecture allows, grow it in
 minimal steps over training, and always validate at the final (planned) patch
@@ -45,6 +47,22 @@ class nnUNetTrainer_PGPSplus(nnUNetTrainer):
                  unpack_dataset: bool = True, device: torch.device = torch.device('cuda')):
         super().__init__(plans, configuration, fold, dataset_json, unpack_dataset, device)
         self.num_iterations_per_epoch = 250
+
+    def _do_i_compile(self) -> bool:
+        """torch.compile is incompatible with this curriculum.
+
+        nnU-Net enables torch.compile by default. Here the network sees a new
+        input shape whenever the patch size grows -- and already from epoch 0,
+        since training runs at the minimum patch size while validation runs at
+        the full planned patch size. Inductor responds by recompiling and then
+        falling back to dynamic shapes, which produces Triton kernels that fail
+        to compile ("unexpected type fp32"). Even when they do compile, a
+        recompile per stage costs more than compilation saves.
+
+        cudnn.benchmark is deliberately left on: the shape is constant within a
+        stage, so its autotuner pays off over the stage's many epochs.
+        """
+        return False
 
     # ------------------------------------------------------------------ schedule
 
@@ -108,35 +126,30 @@ class nnUNetTrainer_PGPSplus(nnUNetTrainer):
         self.configuration_manager.set_batch_size(batch_size)
         self.batch_size = batch_size
 
-        previous = getattr(self, 'dataloader_train', None)
-        self.dataloader_train, _ = self.get_dataloaders()
-        if previous is not None:
-            self._shutdown(previous)
+        previous = self.dataloader_train
+        # get_dataloaders() always builds both; we only want the training one,
+        # so the validation augmenter it returns is shut down straight away
+        # rather than left holding worker processes.
+        self.dataloader_train, unused_val = self.get_dataloaders()
+        self._shutdown(unused_val)
+        self._shutdown(previous)
 
         self.patch_size = patch_size
         self.print_to_log_file(
             f'Curriculum stage {stage + 1}/{self.num_stages}: '
-            f'patch size {list(patch_size)}, batch size {batch_size}'
+            f'patch size {[int(i) for i in patch_size]}, batch size {batch_size}'
         )
-
-    def _build_val_loader(self) -> None:
-        """Validation always runs at the planned (inference) patch size."""
-        self.configuration_manager.set_patch_size(self.original_patch_size)
-        self.configuration_manager.set_batch_size(self.original_batch_size)
-        self.batch_size = self.original_batch_size
-        _, self.dataloader_val = self.get_dataloaders()
 
     # ------------------------------------------------------------------ training
 
     def run_training(self):
         self.on_train_start()
 
-        # on_train_start built dataloaders at the planned patch size; the
-        # curriculum replaces both, so release those workers now.
-        self._shutdown(self.dataloader_train)
-        self._shutdown(self.dataloader_val)
-        self.dataloader_train = None
-        self.dataloader_val = None
+        # on_train_start built both dataloaders at the planned patch size.
+        # self.dataloader_val is exactly what we want -- validation always runs
+        # at the planned (inference) patch size -- so keep it for the whole run.
+        # Only the training loader has to be rebuilt per stage; it is shut down
+        # inside _build_train_loader_for_stage when its replacement is ready.
 
         self.original_patch_size = np.array(self.configuration_manager.patch_size)
         self.original_batch_size = self.configuration_manager.batch_size
@@ -155,19 +168,18 @@ class nnUNetTrainer_PGPSplus(nnUNetTrainer):
         self.epochs_per_stage = max(1, self.num_epochs // self.num_stages)
 
         self.print_to_log_file('##### Progressive Growing of Patch Size (PGPS+) #####')
-        self.print_to_log_file(f'Planned patch size:  {list(self.original_patch_size)}')
+        self.print_to_log_file(f'Planned patch size:  {[int(i) for i in self.original_patch_size]}')
         self.print_to_log_file(f'Planned batch size:  {self.original_batch_size}')
         self.print_to_log_file(f'num_pool_per_axis:   {self.num_pool_per_axis}')
-        self.print_to_log_file(f'Minimal patch size:  {list(self.min_patch_size)}')
+        self.print_to_log_file(f'Minimal patch size:  {[int(i) for i in self.min_patch_size]}')
         self.print_to_log_file(f'Stages:              {self.num_stages} '
                                f'({self.epochs_per_stage} epochs each)')
         for s, (ps, bs) in enumerate(zip(self.patch_sizes, self.batch_sizes)):
-            self.print_to_log_file(f'  stage {s:2d}: patch {list(ps)} batch {bs}')
+            self.print_to_log_file(f'  stage {s:2d}: patch {[int(i) for i in ps]} batch {bs}')
         self.print_to_log_file('####################################################')
 
         self.oversample_foreground_percent = self.curriculum_oversample_foreground_percent
 
-        self._build_val_loader()
         current_stage = None
 
         for epoch in range(self.current_epoch, self.num_epochs):
